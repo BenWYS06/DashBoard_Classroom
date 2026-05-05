@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 import SubjectsCreate from "./pages/subjects/create";
-import SubjectsList from "./pages/subjects/list";
+import SubjectsListPage from "./pages/subjects/list";
 
 function App() {
   return (
@@ -50,8 +50,8 @@ function App() {
                   },
                 },
                 {
-                  name: "subject",
-                  list: "/subject",
+                  name: "subjects",
+                  list: "/subjects",
                   create: "/subjects/create",
                   meta: {
                     label: "Subject",
@@ -69,8 +69,8 @@ function App() {
                   }
                 >
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="subject">
-                    <Route index element={<SubjectsList />} />
+                  <Route path="subjects">
+                    <Route index element={<SubjectsListPage />} />
                     <Route path="create" element={<SubjectsCreate />} />
                   </Route>
                 </Route>
