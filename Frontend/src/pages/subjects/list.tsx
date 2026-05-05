@@ -63,7 +63,7 @@ const SubjectListPage = () => {
         ),
       },
     ],
-    []
+    [],
   );
 
   const departmentFilters =
