@@ -13,7 +13,7 @@ import subjectsRouter from "./routes/subjects.js";
 // import statsRouter from "./routes/stats.js";
 // import enrollmentsRouter from "./routes/enrollments.js";
 
-import securityMiddleware from "./middleware/security";
+import securityMiddleware from "./middleware/security.js";
 import { auth } from "./lib/auth.js";
 
 const app = express();
