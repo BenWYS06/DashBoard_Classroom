@@ -8,6 +8,13 @@
       "when": 1777877606984,
       "tag": "0000_chief_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778225985786,
+      "tag": "0001_skinny_rictor",
+      "breakpoints": true
     }
   ]
 }
