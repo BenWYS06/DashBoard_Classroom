@@ -45,10 +45,10 @@ export const session = pgTable(
 
     ...timestamps,
   },
-  (table) => ({
-    userIdIdx: index("session_user_id_idx").on(table.userId),
-    tokenUnique: uniqueIndex("session_token_unique").on(table.token),
-  }),
+  (table) => [
+    index("session_user_id_idx").on(table.userId),
+    uniqueIndex("session_token_unique").on(table.token),
+  ],
 );
 
 export const account = pgTable(
@@ -70,13 +70,13 @@ export const account = pgTable(
 
     ...timestamps,
   },
-  (table) => ({
-    userIdIdx: index("account_user_id_idx").on(table.userId),
-    accountUnique: uniqueIndex("account_provider_account_unique").on(
+  (table) => [
+    index("account_user_id_idx").on(table.userId),
+    uniqueIndex("account_provider_account_unique").on(
       table.providerId,
       table.accountId,
     ),
-  }),
+  ],
 );
 
 export const verification = pgTable(
@@ -89,9 +89,9 @@ export const verification = pgTable(
 
     ...timestamps,
   },
-  (table) => ({
-    identifierIdx: index("verification_identifier_idx").on(table.identifier),
-  }),
+  (table) => [
+    index("verification_identifier_idx").on(table.identifier),
+  ],
 );
 
 export const usersRelations = relations(user, ({ many }) => ({
