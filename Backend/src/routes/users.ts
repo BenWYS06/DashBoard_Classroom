@@ -1,8 +1,8 @@
 import express from "express";
 import { and, desc, eq, ilike, or, sql, getTableColumns } from "drizzle-orm";
 
-import { db } from "../db";
-import { user } from "../db/schema";
+import { db } from "../db/index.js";
+import { user } from "../db/schema/index.js";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
 
     if (search) {
       filterConditions.push(
-        or(ilike(user.name, `%${search}%`), ilike(user.email, `%${search}%`))
+        or(ilike(user.name, `%${search}%`), ilike(user.email, `%${search}%`)),
       );
     }
 
