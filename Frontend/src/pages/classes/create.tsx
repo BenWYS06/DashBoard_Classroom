@@ -1,6 +1,5 @@
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,10 +24,12 @@ import { CreateView } from "@/components/refine-ui/views/create-view";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 
 import { Textarea } from "@/components/ui/textarea";
-import { useBack } from "@refinedev/core";
+import { useBack, useList } from "@refinedev/core";
 import { Loader2 } from "lucide-react";
 import { classSchema } from "@/lib/schema";
 import UploadWidget from "@/components/upload-widget";
+import { Subject, User } from "@/types";
+import z from "zod";
 
 const ClassesCreate = () => {
   const back = useBack();
@@ -40,54 +41,55 @@ const ClassesCreate = () => {
       action: "create",
     },
     defaultValues: {
-      name: "",
-      subjectId: undefined,
-      teacherId: undefined,
-      capacity: undefined,
-      description: "",
       status: "active",
-      bannerUrl: "",
-      bannerCldPubId: "",
     },
   });
 
   const {
+    refineCore: { onFinish },
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     control,
   } = form;
 
-  const onSubmit = async () => {
+  const bannerPublicId = form.watch("bannerCldPubId");
+
+  const onSubmit = async (values: z.infer<typeof classSchema>) => {
     try {
-      console.log(form.getValues());
+      await onFinish(values);
     } catch (error) {
       console.error("Error creating class:", error);
     }
   };
 
-  const teachers = [
-    {
-      id: 1,
-      name: "John Doe",
+  // Fetch subjects list
+  const { query: subjectsQuery } = useList<Subject>({
+    resource: "subjects",
+    pagination: {
+      pageSize: 100,
     },
-    {
-      id: 2,
-      name: "Jane Doe",
-    },
-  ];
+  });
 
-  const subjects = [
-    {
-      id: 1,
-      name: "Math",
-      code: "MATH",
+  // Fetch teachers list
+  const { query: teachersQuery } = useList<User>({
+    resource: "users",
+    filters: [
+      {
+        field: "role",
+        operator: "eq",
+        value: "teacher",
+      },
+    ],
+    pagination: {
+      pageSize: 100,
     },
-    {
-      id: 2,
-      name: "English",
-      code: "ENG",
-    },
-  ];
+  });
+
+  const teachers = teachersQuery.data?.data || [];
+  const teachersLoading = teachersQuery.isLoading;
+
+  const subjects = subjectsQuery.data?.data || [];
+  const subjectsLoading = subjectsQuery.isLoading;
 
   return (
     <CreateView className="class-view">
@@ -114,13 +116,50 @@ const ClassesCreate = () => {
           <CardContent className="mt-7">
             <Form {...form}>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                <div className="space-y-3">
-                  <Label>
-                    Banner Image <span className="text-orange-600">*</span>
-                  </Label>
-
-                  <UploadWidget />
-                </div>
+                <FormField
+                  control={control}
+                  name="bannerUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Banner Image <span className="text-orange-600">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <UploadWidget
+                          value={
+                            field.value
+                              ? {
+                                  url: field.value,
+                                  publicId: bannerPublicId ?? "",
+                                }
+                              : null
+                          }
+                          onChange={(file) => {
+                            if (file) {
+                              field.onChange(file.url);
+                              form.setValue("bannerCldPubId", file.publicId, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            } else {
+                              field.onChange("");
+                              form.setValue("bannerCldPubId", "", {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      {errors.bannerCldPubId && !errors.bannerUrl && (
+                        <p className="text-destructive text-sm">
+                          {errors.bannerCldPubId.message?.toString()}
+                        </p>
+                      )}
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={control}
@@ -155,6 +194,7 @@ const ClassesCreate = () => {
                             field.onChange(Number(value))
                           }
                           value={field.value?.toString()}
+                          disabled={subjectsLoading}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
@@ -187,7 +227,8 @@ const ClassesCreate = () => {
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value?.toString()}
+                          disabled={teachersLoading}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
@@ -196,10 +237,7 @@ const ClassesCreate = () => {
                           </FormControl>
                           <SelectContent>
                             {teachers.map((teacher) => (
-                              <SelectItem
-                                key={teacher.id}
-                                value={teacher.id.toString()}
-                              >
+                              <SelectItem key={teacher.id} value={teacher.id}>
                                 {teacher.name}
                               </SelectItem>
                             ))}
@@ -217,10 +255,13 @@ const ClassesCreate = () => {
                     name="capacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Capacity</FormLabel>
+                        <FormLabel>
+                          Capacity <span className="text-orange-600">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
+                            min={1}
                             placeholder="30"
                             onChange={(e) => {
                               const value = e.target.value;
@@ -270,7 +311,9 @@ const ClassesCreate = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>
+                        Description <span className="text-orange-600">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Brief description about the class"
